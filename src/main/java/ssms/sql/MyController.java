@@ -1,42 +1,51 @@
 package ssms.sql;
 
 import org.springframework.stereotype.Controller;
-import org.springframework.ui.Model;
 import org.springframework.ui.ModelMap;
 import org.springframework.web.bind.annotation.RequestMapping;
 import java.sql.*;
+import java.util.ArrayList;
 
 @Controller
 public class MyController {
 
+    private ArrayList<String> sqlPrinter=new ArrayList<String>();
+
     @RequestMapping(value="zoo")
     public String outcomePage(ModelMap model) {
         Connection testConnection=getConnectionToDB();
-        String SQLPrint="";
+        ArrayList<String> modelPrinter=new ArrayList<>();
         if(testConnection==null)
         {
-            SQLPrint="No such thing";
+            modelPrinter.add("no connection at all");
         }else {
-            SQLPrint = getSQL(testConnection);
+            modelPrinter=getSQL(testConnection);
         }
-        model.put("MYTEXT",SQLPrint);
+        model.put("MYTEXT",modelPrinter);
         return "SQLOutcome";
     }
 
-    public String getSQL(Connection con)
+    public ArrayList getSQL(Connection con)
     {
         Statement stmt=null;
-        String query="Select * From [PandaSandbox].[dbo].[MyZoo] Where Country='Austrialia'";
+        String query="Select * From [PandaSandbox].[dbo].[MyZoo] Where Country='Brazil'";
 
         try
         {
             stmt=con.createStatement();
             ResultSet rs=stmt.executeQuery(query);
-            rs.next();
-            return rs.getString("Name");
+            while(rs.next())
+            {
+                String queryResult="The quantity of "+rs.getString("Name")+" is "+
+                        rs.getInt("Quantity")+" which is from "+rs.getString("Country")
+                        +" cost us $"+rs.getFloat("Price")+"each on the date "+rs.getDate("Date");
+                sqlPrinter.add(queryResult);
+            }
+            return sqlPrinter;
         }catch(SQLException e)
         {
-            return "Magic Bunny: "+e;
+            sqlPrinter.add("We cannot connect to the SQL but cannot run the sql");
+            return sqlPrinter;
         }
     }
 
